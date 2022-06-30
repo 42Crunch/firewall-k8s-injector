@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  labels:
+    app: {{ .Values.app.name }}
+{{- include "xliic-injector.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+    spec:
+      containers:
+        - name: {{ .Values.app.name }}
+          image: {{ .Values.injectorImage.repo }}:{{ .Values.injectorImage.tag }}
+          imagePullPolicy: {{ .Values.injectorImage.pullPolicy | quote }}
+          args:
+            - server
+            - --tls-cert-file=/etc/webhook/certs/tls.crt
+            - --tls-key-file=/etc/webhook/certs/tls.key
+            - --image={{ .Values.apifirewall.image }}
+            - --max-cpu={{ .Values.apifirewall.maxCpu }}
+            - --max-memory={{ .Values.apifirewall.maxMemory }}
+            - --platform={{ .Values.apifirewall.platform }}
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+          resources:
+            requests:
+              memory: 200Mi
+              cpu: 100m
+            limits:
+              memory: 500Mi
+              cpu: 250m
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: {{ .Values.injector.tlsSecret }}

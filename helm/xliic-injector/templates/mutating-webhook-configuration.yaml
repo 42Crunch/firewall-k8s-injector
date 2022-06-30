@@ -1,0 +1,45 @@
+
+{{- $altNames := list ( printf "%s.%s" .Values.service.name .Release.Namespace ) ( printf "%s.%s.svc" .Values.service.name .Release.Namespace ) -}}
+{{- $ca := genCA "xliic-injector-ca" 365 -}}
+{{- $cert := genSignedCert ( printf "%s.%s" .Values.service.name .Release.Namespace ) nil $altNames 365 $ca -}}
+{{- $caCert := $ca.Cert -}}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ .Values.injector.name }}
+  labels:
+    app: {{ .Values.injector.name }}
+    kind: mutator
+{{- include "xliic-injector.labels" . | nindent 4 }}
+webhooks:
+  - name: {{ .Values.injector.webhookName }}
+    objectSelector:
+      matchExpressions:
+        - key: {{ .Values.injector.label }}
+          operator: In
+          values: ["enabled"]
+    clientConfig:
+      service:
+        name: {{ .Values.service.name }}
+        namespace:  {{ .Release.Namespace }} 
+        path: "/mutate"
+      caBundle: {{ b64enc $caCert }}
+    rules:
+      - operations: [ "CREATE", "UPDATE" ]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    sideEffects: None
+    admissionReviewVersions: ["v1", "v1beta1"]
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: {{ .Values.injector.tlsSecret }}
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+data:
+  tls.crt: {{ $cert.Cert | b64enc }}
+  tls.key: {{ $cert.Key | b64enc }}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: xliic-injector
+description: A Helm chart to install Kubernetes Injector for 42Crunch Micro-API Firewall
+type: application
+version: 0.1.0
+appVersion: 0.1.0

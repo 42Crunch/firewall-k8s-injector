@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "xliic-injector.fullname" . }}-test-connection"
+  labels:
+    {{- include "xliic-injector.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ .Values.service.name }}:{{ .Values.service.port }}']
+  restartPolicy: Never

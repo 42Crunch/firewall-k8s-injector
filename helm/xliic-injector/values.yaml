@@ -1,0 +1,28 @@
+# Default values for xliic-injector.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+service:
+  name: xliic-firewall-injector-webhook
+  port: 443
+  targetPort: 8080
+
+app:
+  name: xliic-firewall-injector
+
+injectorImage:
+  repo: 42crunch/kubernetes-injector
+  tag: v1.0.1
+  pullPolicy: Always
+
+injector:
+  label: firewall-injection
+  name: xliic-firewall-injector
+  webhookName: xliic-firewall-injector.xliic.com
+  tlsSecret: xliic-firewall-injector-certs
+
+apifirewall:
+  image: 42crunch/apifirewall:v1.0.19
+  maxCpu: 500m
+  maxMemory: 500Mi
+  platform: protection.42crunch.com:8001
