@@ -12,7 +12,7 @@ app:
 
 injectorImage:
   repo: 42crunch/kubernetes-injector
-  tag: v1.0.1
+  tag: v1.0.2
   pullPolicy: Always
 
 injector:
