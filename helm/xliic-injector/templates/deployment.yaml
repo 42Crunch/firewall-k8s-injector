@@ -41,4 +41,8 @@ spec:
       volumes:
         - name: webhook-certs
           secret:
+            {{- if not .Values.csrHook.enabled }}
             secretName: {{ .Values.injector.tlsSecret }}
+            {{- else }}
+            secretName: {{ .Values.app.name }}-webhook-certs
+            {{- end }}
