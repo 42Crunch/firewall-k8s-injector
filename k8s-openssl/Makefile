@@ -1,4 +1,4 @@
-DOCKER_IMAGE_NAME ?= rainchei/k8s-openssl
+DOCKER_IMAGE_NAME ?= 42crunch/k8s-openssl
 DOCKER_IMAGE_TAG ?= latest
 KUBECTL_VERSION ?= v1.24.3
 
