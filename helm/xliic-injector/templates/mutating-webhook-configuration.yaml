@@ -1,8 +1,16 @@
-
-{{- $altNames := list ( printf "%s.%s" .Values.service.name .Release.Namespace ) ( printf "%s.%s.svc" .Values.service.name .Release.Namespace ) -}}
-{{- $ca := genCA "xliic-injector-ca" 365 -}}
-{{- $cert := genSignedCert ( printf "%s.%s" .Values.service.name .Release.Namespace ) nil $altNames 365 $ca -}}
-{{- $caCert := $ca.Cert -}}
+{{- $cert := "" }}
+{{- $caCert := "" }}
+{{- if .Values.csrHook.enabled }}
+  {{- $ca := (lookup "v1" "ConfigMap" "kube-system" "kube-root-ca.crt") }}
+  {{- if $ca }}
+  {{- $caCert = index $ca.data "ca.crt" }}
+  {{- end }}
+{{- else }}
+  {{- $altNames := list ( printf "%s.%s" .Values.service.name .Release.Namespace ) ( printf "%s.%s.svc" .Values.service.name .Release.Namespace ) -}}
+  {{- $ca := genCA "xliic-injector-ca" 365 -}}
+  {{- $cert = genSignedCert ( printf "%s.%s" .Values.service.name .Release.Namespace ) nil $altNames 365 $ca -}}
+  {{- $caCert = $ca.Cert -}}
+{{- end }}
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -32,6 +40,7 @@ webhooks:
     sideEffects: None
     admissionReviewVersions: ["v1", "v1beta1"]
 ---
+{{- if not .Values.csrHook.enabled }}
 apiVersion: v1
 kind: Secret
 type: kubernetes.io/tls
@@ -43,3 +52,4 @@ metadata:
 data:
   tls.crt: {{ $cert.Cert | b64enc }}
   tls.key: {{ $cert.Key | b64enc }}
+{{- end }}

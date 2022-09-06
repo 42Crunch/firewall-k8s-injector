@@ -2,5 +2,5 @@ apiVersion: v2
 name: xliic-injector
 description: A Helm chart to install 42Crunch Kubernetes Injector
 type: application
-version: 1.0.0
+version: 1.0.1
 appVersion: 1.0.0

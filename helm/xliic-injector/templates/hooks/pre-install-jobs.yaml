@@ -1,0 +1,140 @@
+{{- if .Values.csrHook.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.app.name }}-cert-setup
+  labels:
+    app: {{ .Values.app.name }}-cert-setup
+{{- include "xliic-injector.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install, pre-upgrade
+    helm.sh/hook-weight: "0"
+spec:
+  template:
+    metadata:
+      name: {{ .Values.app.name }}-cert-setup
+      labels:
+        app: {{ .Values.app.name }}-cert-setup
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ .Values.app.name }}-cert-setup
+      containers:
+        - name: {{ .Values.app.name }}-cert-setup
+          image: {{ .Values.csrHook.image }}
+          imagePullPolicy: {{ .Values.csrHook.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -e
+
+              # Fully qualified name of the CSR object
+              certApi="certificates.k8s.io"
+              certApiVersion="v1"
+              csrApi="certificatesigningrequests.${certApiVersion}.${certApi}"
+
+              secret={{ .Values.app.name }}-webhook-certs
+              service={{ .Values.service.name }}
+              namespace={{ .Release.Namespace }}
+
+              fullServiceDomain="${service}.${namespace}.svc"
+              # THE CN has a limit of 64 characters. We could remove the namespace and svc
+              # and rely on the Subject Alternative Name (SAN), but there is a bug in EKS
+              # that discards the SAN when signing the certificates.
+              #
+              # https://github.com/awslabs/amazon-eks-ami/issues/341
+              if [ ${#fullServiceDomain} -gt 64 ] ; then
+                echo "ERROR: common name exceeds the 64 character limit: ${fullServiceDomain}"
+                exit 1
+              fi
+
+              tmpdir=$(mktemp -d)
+              echo "INFO: creating certs in tmpdir ${tmpdir} "
+
+              cat <<EOF >> "${tmpdir}/csr.conf"
+              [req]
+              req_extensions = v3_req
+              distinguished_name = req_distinguished_name
+              [req_distinguished_name]
+              [ v3_req ]
+              basicConstraints = CA:FALSE
+              keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+              extendedKeyUsage = serverAuth
+              subjectAltName = @alt_names
+              [alt_names]
+              DNS.1 = ${service}
+              DNS.2 = ${service}.${namespace}
+              DNS.3 = ${fullServiceDomain}
+              EOF
+
+              openssl genrsa -out "${tmpdir}/server-key.pem" 2048
+              openssl req -new -key "${tmpdir}/server-key.pem" -subj "/CN=system:node:${fullServiceDomain}/O=system:nodes" -out "${tmpdir}/server.csr" -config "${tmpdir}/csr.conf"
+
+              csrName={{ .Values.app.name }}-csr
+              echo "INFO: creating csr: ${csrName} "
+              set +e
+
+              # clean-up any previously created CSR for our service. Ignore errors if not present.
+              kubectl delete "${csrApi}/${csrName}" 2>/dev/null || true
+              set -e
+
+              # create server cert/key CSR and send it to k8s api
+              cat <<EOF | kubectl create --validate=false -f -
+              apiVersion: ${certApi}/${certApiVersion}
+              kind: CertificateSigningRequest
+              metadata:
+                name: ${csrName}
+              spec:
+                signerName: kubernetes.io/kubelet-serving
+                groups:
+                  - system:authenticated
+                request: $(base64 < "${tmpdir}/server.csr" | tr -d '\n')
+                usages:
+                  - digital signature
+                  - key encipherment
+                  - server auth
+              EOF
+              set +e
+
+              # verify CSR has been created
+              while true; do
+                if kubectl get "${csrApi}/${csrName}"; then
+                    break
+                fi
+              done
+              set -e
+
+              # approve and fetch the signed certificate
+              kubectl certificate approve "${csrApi}/${csrName}"
+              set +e
+
+              # verify certificate has been signed
+              i=1
+              while [ "$i" -ne 20 ]
+              do
+                serverCert=$(kubectl get "${csrApi}/${csrName}" -o jsonpath='{.status.certificate}')
+                if [ "${serverCert}" != '' ]; then
+                    break
+                fi
+                sleep 3
+                i=$((i + 1))
+              done
+              set -e
+
+              if [ "${serverCert}" = '' ]; then
+                echo "ERROR: After approving csr ${csrName}, the signed certificate did not appear on the resource. Giving up after 1 minute." >&2
+                exit 1
+              fi
+
+              echo "${serverCert}" | openssl base64 -d -A -out "${tmpdir}/server-cert.pem"
+
+              # create the secret with CA cert and server cert/key
+              kubectl create secret tls "${secret}" \
+                  --key="${tmpdir}/server-key.pem" \
+                  --cert="${tmpdir}/server-cert.pem" \
+                  --dry-run=client -o yaml \
+              | kubectl label -f- --dry-run=client -o yaml --local \
+                  app={{ .Values.app.name }} \
+              | kubectl -n "${namespace}" apply -f -
+{{- end }}

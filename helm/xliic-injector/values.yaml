@@ -26,3 +26,8 @@ apifirewall:
   maxCpu: 500m
   maxMemory: 500Mi
   platform: protection.42crunch.com:8001
+
+csrHook:
+  enabled: true
+  image: 42crunch/k8s-openssl:latest
+  pullPolicy: IfNotPresent
