@@ -84,6 +84,14 @@ rules:
       - secrets
     verbs:
       - create
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    resourceNames:
+      - {{ .Values.app.name }}-webhook-certs
+    verbs:
+      - patch
       - get
 ---
 kind: RoleBinding
