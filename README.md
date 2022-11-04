@@ -24,13 +24,13 @@ The code dynamically creates the firewall configuration and the resulting config
 If you intend to build the injector locally, please execute the following:
 
 ```shell
-docker build -t 42crunch/injector:latest .
+docker build -t 42crunch/firewall-k8s-injector:latest .
 ```
 
 After that push the resulting image to a repository where you intend to install it from. In our example we are pushing the built image to [42Crunch Docker Hub](https://hub.docker.com/u/42crunch) repo:
 
 ```shell
-docker push 42crunch/injector:latest
+docker push 42crunch/firewall-k8s-injector:latest
 ```
 
 Override `injectorImage.repo` when installing Helm chart. You can do this by going to the `helm/xliic-injector` folder and updating the `values.yaml` file:
