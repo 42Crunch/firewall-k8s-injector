@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/42crunch/kubernetes-injector/cmd"
+	"github.com/42Crunch/firewall-k8s-injector/cmd"
 )
 
 func main() {

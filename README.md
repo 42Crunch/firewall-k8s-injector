@@ -2,12 +2,12 @@
 
 ## Table of Contents
 
-* [Overview](#overview)
-* [What is it?](#what-is-it)
-* [Building the Injector](#building-the-injector)
-* [Injector Installation](#injector-installation)
-* [Injection Labels](#injection-labels)
-* [Annotations](#annotations)
+- [Overview](#overview)
+- [What is it?](#what-is-it)
+- [Building the Injector](#building-the-injector)
+- [Injector Installation](#injector-installation)
+- [Injection Labels](#injection-labels)
+- [Annotations](#annotations)
 
 ## Overview
 
@@ -18,41 +18,42 @@ Kubernetes Injector for 42Crunch Micro-API Firewall protects REST APIs exposed b
 This project contains a [Kubernetes Admission Controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/) which automatically injects a sidecar container with [42Crunch Micro-API Firewall](https://42crunch.com/micro-api-firewall-protection/) into deployments marked with a specific label.
 
 The code dynamically creates the firewall configuration and the resulting config goes into a sidecar container which is injected into the pod. The webhook has been configured to only get triggered when pods have the `firewall-injection` label `enabled` (Please check [Injection Labels](#injection-labels) section).
+
 ## Building the Injector
 
 If you intend to build the injector locally, please execute the following:
 
 ```shell
 docker build -t 42crunch/injector:latest .
-``` 
+```
 
-After that push the resulting image to a repository where you intend to install it from. In our example we are pushing the built image to [42Crunch Docker Hub](https://hub.docker.com/u/42crunch) repo: 
+After that push the resulting image to a repository where you intend to install it from. In our example we are pushing the built image to [42Crunch Docker Hub](https://hub.docker.com/u/42crunch) repo:
 
 ```shell
-docker push 42crunch/injector:latest 
+docker push 42crunch/injector:latest
 ```
 
 Override `injectorImage.repo` when installing Helm chart. You can do this by going to the `helm/xliic-injector` folder and updating the `values.yaml` file:
 
 ```yaml
 13   injectorImage:
-14     repo: 42crunch/kubernetes-injector
+14     repo: 42crunch/firewall-k8s-injector
 ```
 
 ## Injector Installation
 
-The injector is installed using a [**Helm 3**](https://helm.sh) chart, and by default installs a pre-built version of injector published as `42crunch/kubernetes-injector:latest`.
+The injector is installed using a [**Helm 3**](https://helm.sh) chart, and by default installs a pre-built version of injector published as `42crunch/firewall-k8s-injector:latest`.
 
 The chart takes a number of parameters to configure the injector:
 
-| Parameter  | Description  | Default value  |
-|---|---|---|
-| `injectorImage.repo`   |   Injector image | `42crunch/kubernetes-injector`  |
-| `injectorImage.tag`   |  Injector image tag |  `latest` |
-| `apifirewall.image`  |  API Firewall image to use |  `42crunch/apifirewall:latest` |
-| `apifirewall.maxCpu`  |  API Firewall Max CPU|  `500m`|
-| `apifirewall.maxMemory`  |  API Firewall Max Memory|  `500Mi`|
-| `apifirewall.platform`  |  API Firewall Platform|  `protection.42crunch.com:8001`|
+| Parameter               | Description               | Default value                    |
+| ----------------------- | ------------------------- | -------------------------------- |
+| `injectorImage.repo`    | Injector image            | `42crunch/firewall-k8s-injector` |
+| `injectorImage.tag`     | Injector image tag        | `latest`                         |
+| `apifirewall.image`     | API Firewall image to use | `42crunch/apifirewall:latest`    |
+| `apifirewall.maxCpu`    | API Firewall Max CPU      | `500m`                           |
+| `apifirewall.maxMemory` | API Firewall Max Memory   | `500Mi`                          |
+| `apifirewall.platform`  | API Firewall Platform     | `protection.42crunch.com:8001`   |
 
 A typical Helm install command to install the injector might look like:
 

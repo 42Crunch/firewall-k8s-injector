@@ -1,4 +1,4 @@
-module github.com/42crunch/kubernetes-injector
+module github.com/42Crunch/firewall-k8s-injector
 
 go 1.17
 

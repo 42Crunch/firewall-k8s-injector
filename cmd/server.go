@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/42crunch/kubernetes-injector/internal/server"
+	"github.com/42Crunch/firewall-k8s-injector/internal/server"
 	"github.com/oklog/run"
 	"github.com/sirupsen/logrus"
 	kwhlogrus "github.com/slok/kubewebhook/v2/pkg/log/logrus"
