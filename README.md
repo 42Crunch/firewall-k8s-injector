@@ -124,6 +124,7 @@ Now with these secrets in place, you can label deployment with `firewall-injecti
 | Annotation                        | Expected value                                                                       | Sets environment variable                                                         |
 | --------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
 | `xliic.com/http-only`             | Can be set to `enabled`                                                              | LISTEN_NO_TLS                                                                     |
+| `xliic.com/conf-volume`           | Name of K8s persistent volume claim with firewall configuration                      |
 | `xliic.com/log-to-volume`         | Name of K8s persistent volume claim, for writing firewall logs to persistent storage |                                                                                   |
 | `xliic.com/env-configmap`         | Name of K8s ConfigMap                                                                | Each key in the config map will result in respective environment variable         |
 | `xliic.com/debug`                 | Can be set to `enabled`                                                              | Increases trace level to debug for firewall startup                               |

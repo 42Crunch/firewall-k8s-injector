@@ -22,6 +22,7 @@ import (
 
 const containerName = "apifirewall"
 const volumeNameExLogs = "firewall-logs"
+const volumeNameConf = "firewall-conf"
 const volumeNameTLS = "certs-volume"
 
 type InjectedSecret struct {
@@ -51,6 +52,7 @@ type Configuration struct {
 	EnvConfigMap       string `json:"xliic.com/env-configmap"`
 	Debug              string `json:"xliic.com/debug"`
 	LogToVolume        string `json:"xliic.com/log-to-volume"`
+	ConfVolume         string `json:"xliic.com/conf-volume"`
 	InjectSecretEnvJwk string `json:"xliic.com/inject-secret-env-jwk"`
 
 	// later filled by readConfiguration()
@@ -138,6 +140,11 @@ func sidecarInjectMutator(logger kwhlog.Logger, obj metav1.Object, defaults *Ser
 	if configuration.LogToVolume != "" {
 		logger.Infof("Configuring External Logging")
 		pod.Spec.Volumes = append(pod.Spec.Volumes, getVolumeForExtLogs(configuration.LogToVolume))
+	}
+
+	if configuration.ConfVolume != "" {
+		logger.Infof("Configuring Firewall to use configuration provided on the external volume")
+		pod.Spec.Volumes = append(pod.Spec.Volumes, getVolumeForConf(configuration.ConfVolume))
 	}
 
 	pod.Spec.Containers = append(pod.Spec.Containers, *sidecar)
@@ -278,6 +285,14 @@ func createSidecar(configuration *Configuration) (*corev1.Container, error) {
 		})
 	}
 
+	if configuration.ConfVolume != "" {
+		sidecar.VolumeMounts = append(sidecar.VolumeMounts, corev1.VolumeMount{
+			Name:      volumeNameConf,
+			ReadOnly:  true,
+			MountPath: "/opt/guardian/conf",
+		})
+	}
+
 	if configuration.EnvConfigMap != "" {
 		sidecar.EnvFrom = []corev1.EnvFromSource{{ConfigMapRef: &corev1.ConfigMapEnvSource{
 			LocalObjectReference: corev1.LocalObjectReference{
@@ -351,6 +366,17 @@ func readConfiguration(pod *corev1.Pod, defaults *ServerDefaults) (*Configuratio
 func getVolumeForExtLogs(claimName string) corev1.Volume {
 	return corev1.Volume{
 		Name: volumeNameExLogs,
+		VolumeSource: corev1.VolumeSource{
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+				ClaimName: claimName,
+			},
+		},
+	}
+}
+
+func getVolumeForConf(claimName string) corev1.Volume {
+	return corev1.Volume{
+		Name: volumeNameConf,
 		VolumeSource: corev1.VolumeSource{
 			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 				ClaimName: claimName,
