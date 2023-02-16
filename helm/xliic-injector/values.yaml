@@ -12,7 +12,7 @@ app:
 
 injectorImage:
   repo: 42crunch/firewall-k8s-injector
-  tag: v1.1.0
+  tag: latest
   pullPolicy: Always
 
 injector:
@@ -22,7 +22,7 @@ injector:
   tlsSecret: xliic-firewall-injector-certs
 
 apifirewall:
-  image: 42crunch/apifirewall:v1.0.21
+  image: 42crunch/apifirewall:v1.0.23
   maxCpu: 500m
   maxMemory: 500Mi
   platform: protection.42crunch.com:8001
