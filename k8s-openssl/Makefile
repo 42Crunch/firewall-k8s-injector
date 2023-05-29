@@ -1,13 +1,12 @@
 DOCKER_IMAGE_NAME ?= 42crunch/k8s-openssl
-DOCKER_IMAGE_TAG ?= latest
-KUBECTL_VERSION ?= v1.24.3
+DOCKER_IMAGE_TAG ?= 0.1.1
 
 .PHONY: all
 all: build inspect
 
 .PHONY: build
 build:
-	docker buildx build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) --build-arg KUBECTL_VERSION=$(KUBECTL_VERSION) --platform linux/amd64,linux/arm64 --push .
+	docker buildx build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) --platform linux/amd64,linux/arm64 --push .
 
 .PHONY: inspect
 inspect:

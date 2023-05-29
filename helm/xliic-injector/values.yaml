@@ -29,5 +29,5 @@ apifirewall:
 
 csrHook:
   enabled: true
-  image: 42crunch/k8s-openssl:latest
+  image: 42crunch/k8s-openssl:0.1.1
   pullPolicy: IfNotPresent
