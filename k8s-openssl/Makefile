@@ -6,7 +6,7 @@ all: build inspect
 
 .PHONY: build
 build:
-	docker buildx build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) --platform linux/amd64,linux/arm64 --push .
+	docker buildx build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -t $(DOCKER_IMAGE_NAME):latest --platform linux/amd64,linux/arm64 --push .
 
 .PHONY: inspect
 inspect:
