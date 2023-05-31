@@ -55,6 +55,20 @@ The chart takes a number of parameters to configure the injector:
 | `apifirewall.maxMemory` | API Firewall Max Memory   | `500Mi`                          |
 | `apifirewall.platform`  | API Firewall Platform     | `protection.42crunch.com:8001`   |
 
+### Installing from Helm repository 
+The Helm chart is available from our central repository. Use the following commands to get the charts:
+```
+helm repo add 42crunch https://repo.42crunch.com/charts
+helm repo update
+```
+
+To install, you can use the following command 
+```
+helm upgrade --install injector 42crunch/xliic-injector --set apifirewall.platform=protection.42crunch.com:8001 --namespace injector-ns --create-namespace
+```
+
+### Installing from GitHub repository
+
 A typical Helm install command to install the injector might look like:
 
     helm install injector ./helm/xliic-injector --set apifirewall.platform=protection.42crunch.com:8001 --namespace injector-ns --create-namespace
